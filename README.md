@@ -35,11 +35,18 @@ Você pode executar diretamente como um site estático:
 1. Clone ou baixe o projeto:
    ```bash
    git clone [Eu li os jornais hoje, ô, cara](https://luiscarloseiras.github.io/eu-li-os-jornais-hoje/).git
+
+---
+
 📦 Tecnologias utilizadas
 HTML5, CSS3 e JavaScript (100% client-side)
 
+---
+
 ## 📝 Licença
 Este projeto é experimental e distribuído sob a licença MIT.
+
+---
 
 ## ✏️ Autor
 Luís Carlos Silva Eiras
