@@ -34,4 +34,4 @@ Você pode executar diretamente como um site estático:
 
 1. Clone ou baixe o projeto:
    ```bash
-   git clone https://github.com/SEU_USUARIO/eu-li-os-jornais-hoje.git
+   git clone [Eu li os jornais hoje, ô, cara](https://luiscarloseiras.github.io/eu-li-os-jornais-hoje/).git
