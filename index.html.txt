@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eu li os jornais hoje, ô, cara</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Eu li os jornais hoje, ô, cara</h1>
+    <p>Um experimento literário automático com Sagredo, Salvati e Simplicio</p>
+  </header>
+
+  <main>
+    <section id="noticia">
+      <h2>🗞️ Notícia em destaque</h2>
+      <div id="noticia-texto">Carregando notícia...</div>
+    </section>
+
+    <section id="dialogo">
+      <h2>🛰️ Diálogo gerado</h2>
+      <div id="falas">Aguardando geração do diálogo...</div>
+      <button onclick="gerarDialogo()">Gerar novo diálogo</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>Inspirado em <em>A Day in the Life</em>, dos Beatles | Projeto automático com Gemma 3n</p>
+  </footer>
+
+  <script src="noticias.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
