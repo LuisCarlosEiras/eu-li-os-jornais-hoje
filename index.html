@@ -1,35 +1,109 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eu li os jornais hoje, ô, cara</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: #f9f9f9;
+      margin: 2rem;
+      color: #333;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #990000;
+    }
+    .noticia {
+      background: #fff;
+      padding: 1rem;
+      border-left: 6px solid #990000;
+      margin-bottom: 1rem;
+    }
+    .dialogo {
+      background: #fff;
+      padding: 1rem;
+      border-left: 4px solid #ccc;
+      margin-bottom: 0.5rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      background-color: #990000;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #b30000;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Eu li os jornais hoje, ô, cara</h1>
-    <p>Um experimento literário automático com Sagredo, Salvati e Simplicio</p>
-  </header>
+  <h1>Eu li os jornais hoje, ô, cara</h1>
 
-  <main>
-    <section id="noticia">
-      <h2>🗞️ Notícia em destaque</h2>
-      <div id="noticia-texto">Carregando notícia...</div>
-    </section>
+  <div id="noticia" class="noticia">Carregando notícia mais recente...</div>
 
-    <section id="dialogo">
-      <h2>🛰️ Diálogo gerado</h2>
-      <div id="falas">Aguardando geração do diálogo...</div>
-      <button onclick="gerarDialogo()">Gerar novo diálogo</button>
-    </section>
-  </main>
+  <div id="dialogos"></div>
 
-  <footer>
-    <p>Inspirado em <em>A Day in the Life</em>, dos Beatles | Projeto automático com Gemma 3n</p>
-  </footer>
+  <button id="continuar">Continuar o diálogo</button>
 
-  <script src="noticias.js"></script>
-  <script src="script.js"></script>
+  <script>
+    const noticiaElem = document.getElementById('noticia');
+    const dialogosElem = document.getElementById('dialogos');
+    const continuarBtn = document.getElementById('continuar');
+    let noticiaResumo = "";
+    let contador = 0;
+
+    async function obterNoticia() {
+      const resposta = await fetch("https://duckduckgo.com/?q=not%C3%ADcia+recente+tecnologia+ou+ci%C3%AAncia+ou+economia&format=json&pretty=1&no_redirect=1&no_html=1", {
+        method: "GET",
+        mode: "cors"
+      });
+
+      // Simulação provisória da notícia real
+      noticiaResumo = "A China planeja lançar um supercomputador para o espaço nos próximos anos, visando avanços em inteligência artificial e clima.";
+      noticiaElem.innerHTML = `<strong>🗞️ Notícia:</strong> ${noticiaResumo}`;
+
+      await gerarDialogo();
+    }
+
+    async function gerarDialogo() {
+      const personagem = contador === 0 ? "Sagredo" : contador % 2 === 1 ? "Salvati" : "Simplicio";
+      const inicio = contador === 0 ? `Sagredo: Eu li as notícias hoje, ô caras. ${noticiaResumo}` : "";
+
+      const resposta = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=SUA_API_KEY", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `${inicio}\n${personagem}: Continue o diálogo no estilo de ${personagem}.`
+                }
+              ]
+            }
+          ]
+        })
+      });
+
+      const data = await resposta.json();
+      const fala = data.candidates?.[0]?.content?.parts?.[0]?.text || "[Resposta não recebida]";
+      const bloco = document.createElement('div');
+      bloco.className = 'dialogo';
+      bloco.innerHTML = `<strong>${personagem}:</strong> ${fala}`;
+      dialogosElem.appendChild(bloco);
+      contador++;
+    }
+
+    continuarBtn.addEventListener('click', gerarDialogo);
+    obterNoticia();
+  </script>
 </body>
 </html>
