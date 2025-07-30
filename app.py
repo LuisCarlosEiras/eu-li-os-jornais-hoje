@@ -1,4 +1,4 @@
-# gerador_dialogo.py
+# app.py
 #
 # DESCRIÇÃO:
 # Este script busca uma notícia recente sobre ciência, tecnologia ou economia,
