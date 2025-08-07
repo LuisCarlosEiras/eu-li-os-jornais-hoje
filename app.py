@@ -12,21 +12,20 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 import random
 
-# --- 1. CONFIGURAÇÃO E CARREGAMENTO DE VARIÁVEIS DE AMBIENTE ---
-# Carrega as variáveis do arquivo .env
-load_dotenv() 
+# --- 1. CONFIGURAÇÃO E DEFINIÇÕES ---
+# Carrega variáveis de ambiente de um arquivo .env (se existir)
+load_dotenv()
 
+# Configurações de log para um output mais limpo
 logging.getLogger().setLevel(logging.ERROR)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-# Carrega a chave da API do Hugging Face a partir das variáveis de ambiente
-HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
+# --- DEFINA O CAMINHO PARA A PASTA DO SEU MODELO AQUI ---
+# O caminho deve ser relativo à localização do script 'main.py'
+LOCAL_MODEL_PATH = "./gemma-model"
 
-# Verificação do Token
-if not HUGGING_FACE_TOKEN:
-    raise ValueError("O token de acesso do Hugging Face não foi encontrado. Por favor, configure a variável de ambiente HUGGING_FACE_TOKEN em seu arquivo .env.")
 
-# --- 2. FUNÇÃO PARA OBTER A NOTÍCIA (sem alterações) ---
+# --- 2. FUNÇÃO PARA OBTER A NOTÍCIA ---
 def common_prefix_len_ignore_case(s1, s2):
     s1_lower = s1.lower()
     s2_lower = s2.lower()
@@ -41,7 +40,7 @@ def obter_noticia():
     
     try:
         resposta = requests.get(url)
-        resposta.raise_for_status() # Lança um erro para respostas ruins (4xx ou 5xx)
+        resposta.raise_for_status()  # Lança um erro para respostas ruins (4xx ou 5xx)
         soup = BeautifulSoup(resposta.content, features="xml")
         items = soup.find_all("item")
         if not items:
@@ -83,10 +82,17 @@ def obter_noticia():
         return {"titulo": "Erro de Conexão", "conteudo": "Não foi possível conectar à API de notícias.", "link": ""}
 
 
-# --- 3. FUNÇÃO PARA CARREGAR O MODELO ---
-def carregar_modelo_ia(model_id="google/gemma-2b-it"):
-    """Carrega o modelo e o tokenizer do Hugging Face."""
-    print(f"🔍 Carregando modelo: {model_id}")
+# --- 3. FUNÇÃO PARA CARREGAR O MODELO LOCALMENTE ---
+def carregar_modelo_ia(model_path):
+    """Carrega o modelo e o tokenizer de uma pasta local."""
+    print(f"🔍 Verificando a pasta do modelo em: {model_path}")
+
+    if not os.path.isdir(model_path):
+        print(f"❌ Erro: O diretório do modelo '{model_path}' não foi encontrado.")
+        print("Verifique se o nome da pasta está correto e se ela está no mesmo nível do script.")
+        return None, None
+        
+    print(f"Carregando modelo do caminho local: {model_path}")
     try:
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
@@ -94,19 +100,18 @@ def carregar_modelo_ia(model_id="google/gemma-2b-it"):
             bnb_4bit_compute_dtype=torch.bfloat16
         )
 
-        tokenizer = AutoTokenizer.from_pretrained(model_id, token=HUGGING_FACE_TOKEN)
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
         model = AutoModelForCausalLM.from_pretrained(
-            model_id,
+            model_path,
             quantization_config=quantization_config,
-            device_map="auto",
-            token=HUGGING_FACE_TOKEN
+            device_map="auto"
         )
-        print("✅ Modelo e tokenizer carregados com sucesso!")
+        print("✅ Modelo e tokenizer carregados com sucesso da pasta local!")
         return model, tokenizer
     except Exception as e:
-        print(f"❌ Erro ao carregar o modelo do Hugging Face: {e}")
-        print("Verifique se o seu HUGGING_FACE_TOKEN está correto e se você aceitou os termos de uso do modelo Gemma no site do Hugging Face.")
+        print(f"❌ Erro ao carregar o modelo local: {e}")
         return None, None
+
 
 # --- 4. FUNÇÃO PARA GERAR O DIÁLOGO ---
 def gerar_dialogo(model, tokenizer, noticia):
@@ -150,8 +155,7 @@ A resposta deve ser apenas o código HTML, contendo EXATAMENTE seis falas, uma p
 
         dialogo_html = tokenizer.decode(outputs[0][len(inputs.input_ids[0]):], skip_special_tokens=True)
         
-        # O restante da lógica de limpeza e formatação permanece o mesmo
-        # ...
+        # Aqui você pode adicionar a lógica de limpeza de HTML se necessário
         
         print("✅ Diálogo gerado com sucesso!")
         return dialogo_html.strip()
@@ -163,9 +167,9 @@ A resposta deve ser apenas o código HTML, contendo EXATAMENTE seis falas, uma p
         return gerar_dialogo_fallback(noticia)
 
 
-# --- 5. FUNÇÃO FALLBACK (sem alterações significativas) ---
+# --- 5. FUNÇÃO FALLBACK PARA GERAR DIÁLOGO ---
 def gerar_dialogo_fallback(noticia):
-    """Gera um diálogo básico quando o modelo IA não está disponível"""
+    """Gera um diálogo básico quando o modelo IA não está disponível."""
     print("🔄 Gerando diálogo fallback...")
     
     sagredo_icon_url = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232c5aa0' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 14s1.5 2 4 2 4-2 4-2'/%3E%3Cline x1='9' y1='9' x2='9.01' y2='9'/%3E%3Cline x1='15' y1='9' x2='15.01' y2='9'/%3E%3C/svg%3E"
@@ -183,6 +187,7 @@ def gerar_dialogo_fallback(noticia):
 <p><img src="{Salviati_icon_url}" {icon_style} alt="Salviati"><strong>Salviati:</strong> Talvez a verdade esteja no meio-termo: nem a credulidade cega de Simplicio, nem o ceticismo absoluto de Sagredo, mas uma postura crítica que avalie cada informação em seu contexto específico.</p>"""
     
     return dialogo
+
 
 # --- 6. FUNÇÃO PARA MONTAR E SALVAR A PÁGINA HTML ---
 def gerar_e_salvar_pagina_html(noticia, dialogo_html, nome_arquivo="dialogo_filosofico.html"):
@@ -242,26 +247,29 @@ def gerar_e_salvar_pagina_html(noticia, dialogo_html, nome_arquivo="dialogo_filo
     except IOError as e:
         print(f"❌ Erro ao salvar o arquivo HTML: {e}")
 
+
 # --- 7. EXECUÇÃO PRINCIPAL ---
 def main():
     print("🚀 Iniciando o programa...")
     
-    # Carrega o modelo de IA primeiro
-    model, tokenizer = carregar_modelo_ia()
+    # Carrega o modelo de IA do caminho local especificado
+    model, tokenizer = carregar_modelo_ia(LOCAL_MODEL_PATH)
 
     # Obtém a notícia
     noticia_atual = obter_noticia()
     if noticia_atual and noticia_atual["titulo"] not in ["Nenhuma notícia encontrada", "Erro de Conexão"]:
         print("📰 Notícia obtida com sucesso!")
+        # A geração do diálogo usará o modelo local se ele foi carregado com sucesso
         dialogo_gerado = gerar_dialogo(model, tokenizer, noticia_atual)
     else:
         print("❌ Falha ao obter notícia. O diálogo será gerado com base em um título de erro.")
         dialogo_gerado = gerar_dialogo_fallback(noticia_atual)
 
-    # Gera e salva a página HTML
+    # Gera e salva a página HTML final
     gerar_e_salvar_pagina_html(noticia_atual, dialogo_gerado)
     
     print("✅ Processo concluído!")
+
 
 # --- 8. PONTO DE ENTRADA DO SCRIPT ---
 if __name__ == "__main__":
