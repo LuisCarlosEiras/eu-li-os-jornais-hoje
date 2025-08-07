@@ -1,4 +1,8 @@
-requests
+requests 
+kaggle 
+ipython 
+torch 
+transformers 
+bitsandbytes 
+accelerate 
 beautifulsoup4
-ctransformers
-lxml
