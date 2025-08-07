@@ -1,4 +1,4 @@
-pip install requests kaggle ipython torch transformers bitsandbytes accelerate beautifulsoup4
+# pip install requests kaggle ipython torch transformers bitsandbytes accelerate beautifulsoup4
 
 import os
 import requests
